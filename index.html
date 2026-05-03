@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>足の８０２０ API仕様書 v1.0</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital@0;1&family=Noto+Sans+JP:wght@300;400;500&family=DM+Serif+Display&display=swap');
+
+:root {
+  --ink: #1a1a18;
+  --ink-light: #4a4a46;
+  --ink-muted: #8a8a84;
+  --paper: #f8f5ef;
+  --white: #ffffff;
+  --green: #2d6a4f;
+  --green-light: #52b788;
+  --green-pale: #d8f3dc;
+  --blue: #185FA5;
+  --blue-pale: #e6f1fb;
+  --amber: #b5872a;
+  --amber-pale: #fef9ec;
+  --red: #9b2226;
+  --red-pale: #fcebeb;
+  --border: #d4ccbb;
+  --code-bg: #1e1e1c;
+  --code-fg: #d4d0c8;
+  --code-green: #87c38f;
+  --code-blue: #88b4e7;
+  --code-amber: #e5c07b;
+  --code-red: #e06c75;
+  --code-muted: #666660;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+/* ── サイドバー付きレイアウト ── */
+.layout { display: flex; min-height: 100vh; }
+
+nav {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--ink);
+  padding: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.nav-logo {
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid #333;
+}
+.nav-logo .logo-main {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  color: var(--green-light);
+  letter-spacing: .04em;
+}
+.nav-logo .logo-sub {
+  font-size: 9px;
+  color: #666;
+  letter-spacing: .1em;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+.nav-logo .version-badge {
+  display: inline-block;
+  background: var(--green);
+  color: var(--white);
+  font-size: 9px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-top: 6px;
+  font-family: 'DM Mono', monospace;
+}
+
+.nav-section {
+  padding: 12px 0 4px 20px;
+  font-size: 9px;
+  color: #555;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+nav a {
+  display: block;
+  padding: 6px 20px;
+  font-size: 12px;
+  color: #aaa;
+  text-decoration: none;
+  transition: color .15s, background .15s;
+}
+nav a:hover { color: var(--white); background: #2a2a28; }
+nav a.active { color: var(--green-light); }
+
+/* ── メインコンテンツ ── */
+main {
+  flex: 1;
+  max-width: 860px;
+  padding: 48px 48px 80px;
+  margin-left: 240px;
+}
+
+@media(max-width: 760px) {
+  nav { display: none; }
+  main { padding: 24px 16px 60px; margin-left: 0; }
+}
+
+/* ── セクション ── */
+.section { margin-bottom: 56px; }
+
+.section-anchor { display: block; height: 1px; margin-top: -20px; }
+
+h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+h3 {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-light);
+  letter-spacing: .08em;
+  margin: 20px 0 8px;
+}
+
+p { margin-bottom: 12px; color: var(--ink-light); }
+p:last-child { margin-bottom: 0; }
+
+/* ── バッジ ── */
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: .04em;
+  vertical-align: middle;
+}
+.badge-get    { background: var(--green-pale); color: var(--green); }
+.badge-post   { background: var(--blue-pale);  color: var(--blue); }
+.badge-stable { background: var(--green-pale); color: var(--green); }
+.badge-beta   { background: var(--amber-pale); color: var(--amber); }
+
+/* ── エンドポイントカード ── */
+.endpoint-card {
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  background: var(--white);
+}
+.endpoint-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--white);
+  border-bottom: 0.5px solid var(--border);
+}
+.endpoint-method {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+.method-get  { background: var(--green-pale); color: var(--green); }
+.method-post { background: var(--blue-pale);  color: var(--blue); }
+
+.endpoint-path {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--ink);
+}
+.endpoint-desc {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+.endpoint-body { padding: 20px; }
+
+/* ── コードブロック ── */
+pre {
+  background: var(--code-bg);
+  border-radius: 8px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+code {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+}
+pre code { color: var(--code-fg); }
+
+.cm { color: var(--code-muted); font-style: italic; }
+.ck { color: var(--code-blue); }
+.cv { color: var(--code-amber); }
+.cs { color: var(--code-green); }
+.cn { color: #d19a66; }
+.cb { color: var(--code-red); }
+
+/* インラインコード */
+p code, li code, td code {
+  background: #eee8d8;
+  color: var(--green);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+/* ── パラメータテーブル ── */
+.param-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 12px 0;
+}
+.param-table th {
+  background: var(--paper);
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 500;
+  border: 0.5px solid var(--border);
+  font-size: 11px;
+  letter-spacing: .05em;
+  color: var(--ink-muted);
+}
+.param-table td {
+  padding: 9px 12px;
+  border: 0.5px solid var(--border);
+  color: var(--ink-light);
+  vertical-align: top;
+}
+.param-table td:first-child {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--blue);
+  white-space: nowrap;
+}
+.param-table td:nth-child(2) {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+.required {
+  display: inline-block;
+  font-size: 9px;
+  background: var(--red-pale);
+  color: var(--red);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+  font-family: 'DM Mono', monospace;
+}
+.optional {
+  display: inline-block;
+  font-size: 9px;
+  background: var(--paper);
+  color: var(--ink-muted);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+  border: 0.5px solid var(--border);
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── 情報ボックス ── */
+.info-box {
+  border-left: 3px solid var(--green-light);
+  border-radius: 0 8px 8px 0;
+  background: var(--green-pale);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 12px;
+  color: var(--green);
+}
+.warn-box {
+  border-left: 3px solid var(--amber);
+  border-radius: 0 8px 8px 0;
+  background: var(--amber-pale);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 12px;
+  color: var(--amber);
+}
+
+/* ── フッター ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 24px 0 0;
+  margin-top: 48px;
+  font-size: 11px;
+  color: var(--ink-muted);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+footer a { color: var(--green); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ── ナビゲーション ── -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-main">足の８０２０</div>
+    <div class="logo-sub">Open API Reference</div>
+    <div class="version-badge">v1.0.0</div>
+  </div>
+
+  <div class="nav-section">はじめに</div>
+  <a href="#overview">概要・設計思想</a>
+  <a href="#base-url">ベースURL</a>
+  <a href="#auth">認証</a>
+  <a href="#partner">パートナー認定</a>
+
+  <div class="nav-section">エンドポイント</div>
+  <a href="#ep-calc">社会貢献試算</a>
+  <a href="#ep-record">歩行記録登録</a>
+  <a href="#ep-certificate">通知書生成</a>
+  <a href="#ep-city">自治体集計</a>
+
+  <div class="nav-section">データ仕様</div>
+  <a href="#schema">スキーマ定義</a>
+  <a href="#errors">エラーコード</a>
+  <a href="#rate-limit">レート制限</a>
+
+  <div class="nav-section">連携ガイド</div>
+  <a href="#quickstart">クイックスタート</a>
+  <a href="#webhook">Webhook</a>
+  <a href="#privacy">プライバシー</a>
+  <a href="#contact">お問い合わせ</a>
+</nav>
+
+<!-- ── メインコンテンツ ── -->
+<main>
+
+  <!-- ヘッダー -->
+  <div style="margin-bottom:40px">
+    <p style="font-size:11px;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:8px">一般社団法人 足の８０２０ — PUBLIC API</p>
+    <h1>API仕様書</h1>
+    <p style="font-size:13px;color:var(--ink-muted)">Version 1.0.0 &nbsp;·&nbsp; 2026年5月公開 &nbsp;·&nbsp; <span class="badge badge-stable">stable</span></p>
+    <div class="info-box" style="margin-top:16px">
+      このAPIは、ウォーキングアプリ・健康管理サービス・自治体システムが「足の８０２０ウォーキング」に接続するためのオープンインターフェースです。認定パートナーになることで、参加者の歩行データを受け付け、社会貢献額の試算・通知書の発行が可能になります。
+    </div>
+  </div>
+
+  <!-- ── 概要 ── -->
+  <div class="section">
+    <span class="section-anchor" id="overview"></span>
+    <h2>概要・設計思想</h2>
+    <p>「足の８０２０」APIは、<strong>「歩く」という日常行為を社会貢献として定量化する</strong>ためのインターフェースです。接続するアプリやサービスは、参加者の歩行記録を送信するだけで、医療費削減試算・社会貢献通知書の発行・自治体単位の集計レポートを受け取ることができます。</p>
+    <p>設計の原則は３つです。第一に<strong>オープン</strong>——キャリア・OS・アプリを問わず誰でも接続できます。第二に<strong>プライバシーファースト</strong>——個人を特定するデータは取得せず、集計・匿名化されたデータのみを扱います。第三に<strong>エビデンスベース</strong>——試算ロジックは厚生労働省・国立長寿医療研究センターの公開データに基づき、根拠を全て公開します。</p>
+
+    <span class="section-anchor" id="base-url"></span>
+    <h3>ベースURL</h3>
+    <pre><code><span class="cm"># 本番環境（2026年5月〜）</span>
+<span class="cs">https://ashino8020.github.io/api/v1</span>
+
+<span class="cm"># 現在はスタティックJSON。動的APIへの移行時もエンドポイント構造は維持します。</span></code></pre>
+
+    <span class="section-anchor" id="auth"></span>
+    <h3>認証</h3>
+    <p>現バージョン（v1）では、パートナー登録後に発行される <code>partner_key</code> をリクエストヘッダーに含めます。</p>
+    <pre><code><span class="ck">GET</span> /v1/calculate
+<span class="cv">Authorization</span>: Bearer <span class="cs">your_partner_key_here</span>
+<span class="cv">Content-Type</span>: application/json</code></pre>
+
+    <span class="section-anchor" id="partner"></span>
+    <h3>パートナー認定制度</h3>
+    <p>「足の８０２０認定パートナー」は、以下の条件を満たすアプリ・サービスに付与されます。認定を受けると <code>partner_key</code> の発行・公式サイトへの掲載・共同プレスリリースの権利が得られます。</p>
+    <table class="param-table">
+      <thead><tr><th>条件</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td>歩行記録機能</td><td>1日20分以上（または約1.2km）の歩行を記録・判定できること</td></tr>
+        <tr><td>同意取得</td><td>参加者からAPIへのデータ送信について明示的な同意を得ていること</td></tr>
+        <tr><td>非営利目的の明示</td><td>足の８０２０への連携が非営利・社会貢献目的であることをUI上で表示すること</td></tr>
+        <tr><td>プライバシー保護</td><td>個人を特定する情報をAPIに送信しないこと</td></tr>
+      </tbody>
+    </table>
+    <p>パートナー申請は <a href="https://www.ashino8020.jp">ashino8020.jp</a> の問い合わせフォームから受け付けています。</p>
+  </div>
+
+  <!-- ── エンドポイント：試算 ── -->
+  <div class="section">
+    <span class="section-anchor" id="ep-calc"></span>
+    <h2>エンドポイント</h2>
+
+    <div class="endpoint-card">
+      <div class="endpoint-header">
+        <span class="endpoint-method method-get">GET</span>
+        <span class="endpoint-path">/v1/calculate</span>
+        <span class="badge badge-stable" style="margin-left:8px">stable</span>
+        <span class="endpoint-desc">社会貢献額を試算する</span>
+      </div>
+      <div class="endpoint-body">
+        <p>歩行実績データを受け取り、医療費・介護費の削減推計額と社会貢献スコアを返します。試算ロジックは厚労省・国立長寿医療研究センターのデータに基づきます。</p>
+
+        <h3>クエリパラメータ</h3>
+        <table class="param-table">
+          <thead><tr><th>パラメータ</th><th>型</th><th>説明</th></tr></thead>
+          <tbody>
+            <tr><td>walking_days<span class="required">required</span></td><td>integer</td><td>5月中に歩いた日数（1〜31）</td></tr>
+            <tr><td>avg_minutes<span class="required">required</span></td><td>integer</td><td>1日あたり平均歩行時間（分）。最小値20</td></tr>
+            <tr><td>age_group<span class="required">required</span></td><td>string</td><td><code>30s</code> / <code>40s</code> / <code>50s</code> / <code>60s</code> / <code>70plus</code></td></tr>
+            <tr><td>region<span class="optional">optional</span></td><td>string</td><td><code>city</code>（大都市）/ <code>urban</code>（地方都市、デフォルト）/ <code>rural</code>（過疎）</td></tr>
+            <tr><td>years<span class="optional">optional</span></td><td>integer</td><td>継続参加年数（1〜10、デフォルト1）</td></tr>
+          </tbody>
+        </table>
+
+        <h3>レスポンス例</h3>
+        <pre><code><span class="cm">// HTTP 200 OK</span>
+{
+  <span class="ck">"status"</span>: <span class="cs">"ok"</span>,
+  <span class="ck">"version"</span>: <span class="cs">"1.0.0"</span>,
+  <span class="ck">"result"</span>: {
+    <span class="ck">"annual_saving_jpy"</span>: <span class="cn">72000</span>,        <span class="cm">// 今年度推計削減額（円）</span>
+    <span class="ck">"cumulative_saving_jpy"</span>: <span class="cn">84960</span>,    <span class="cm">// 累計削減額（継続年数分）</span>
+    <span class="ck">"breakdown"</span>: {
+      <span class="ck">"medical_jpy"</span>: <span class="cn">44640</span>,            <span class="cm">// 医療費削減分</span>
+      <span class="ck">"care_jpy"</span>: <span class="cn">20160</span>,               <span class="cm">// 介護費削減分</span>
+      <span class="ck">"other_jpy"</span>: <span class="cn">7200</span>                <span class="cm">// その他社会的費用削減分</span>
+    },
+    <span class="ck">"achievement_rate"</span>: <span class="cn">0.81</span>,          <span class="cm">// 達成率（25日/31日）</span>
+    <span class="ck">"social_contribution_score"</span>: <span class="cn">82</span>,   <span class="cm">// 独自スコア（0〜100）</span>
+    <span class="ck">"equivalent"</span>: {
+      <span class="ck">"school_meals"</span>: <span class="cn">314</span>,             <span class="cm">// 給食換算（食）</span>
+      <span class="ck">"child_activity_days"</span>: <span class="cn">56</span>         <span class="cm">// 子ども体験活動換算（日）</span>
+    }
+  },
+  <span class="ck">"evidence"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"MHLW-2023 / NCGG-SGS Cohort"</span>,
+    <span class="ck">"note"</span>: <span class="cs">"参考推計値です。個人差があります。"</span>
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- ── 歩行記録登録 ── -->
+    <div class="endpoint-card">
+      <div class="endpoint-header">
+        <span class="endpoint-method method-post">POST</span>
+        <span class="endpoint-path">/v1/records</span>
+        <span class="badge badge-beta" style="margin-left:8px">beta</span>
+        <span class="endpoint-desc">歩行記録を登録する</span>
+      </div>
+      <div class="endpoint-body">
+        <p>参加者の歩行記録を送信します。<strong>個人を特定する情報（氏名・メールアドレス・電話番号等）は送信しないでください。</strong>パートナーアプリ内部のユーザーIDを匿名IDとして使用します。</p>
+
+        <h3>リクエストボディ（JSON）</h3>
+        <pre><code>{
+  <span class="ck">"partner_id"</span>: <span class="cs">"docomo_dhealth"</span>,         <span class="cm">// 認定パートナーID</span>
+  <span class="ck">"anonymous_user_id"</span>: <span class="cs">"sha256_hashed_id"</span>, <span class="cm">// ハッシュ化されたユーザーID</span>
+  <span class="ck">"year"</span>: <span class="cn">2026</span>,
+  <span class="ck">"month"</span>: <span class="cn">5</span>,
+  <span class="ck">"records"</span>: [
+    {
+      <span class="ck">"date"</span>: <span class="cs">"2026-05-10"</span>,
+      <span class="ck">"duration_minutes"</span>: <span class="cn">28</span>,
+      <span class="ck">"achieved"</span>: <span class="cb">true</span>             <span class="cm">// 20分以上達成</span>
+    },
+    {
+      <span class="ck">"date"</span>: <span class="cs">"2026-05-11"</span>,
+      <span class="ck">"duration_minutes"</span>: <span class="cn">15</span>,
+      <span class="ck">"achieved"</span>: <span class="cb">false</span>
+    }
+  ],
+  <span class="ck">"age_group"</span>: <span class="cs">"50s"</span>,
+  <span class="ck">"region"</span>: <span class="cs">"urban"</span>
+}</code></pre>
+
+        <h3>レスポンス例</h3>
+        <pre><code><span class="cm">// HTTP 201 Created</span>
+{
+  <span class="ck">"status"</span>: <span class="cs">"accepted"</span>,
+  <span class="ck">"record_id"</span>: <span class="cs">"rec_2026_abc123"</span>,
+  <span class="ck">"achieved_days"</span>: <span class="cn">1</span>,
+  <span class="ck">"total_days_this_month"</span>: <span class="cn">1</span>,
+  <span class="ck">"certificate_available"</span>: <span class="cb">false</span>  <span class="cm">// 月末に true になる</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- ── 通知書生成 ── -->
+    <span class="section-anchor" id="ep-certificate"></span>
+    <div class="endpoint-card">
+      <div class="endpoint-header">
+        <span class="endpoint-method method-get">GET</span>
+        <span class="endpoint-path">/v1/certificate</span>
+        <span class="badge badge-stable" style="margin-left:8px">stable</span>
+        <span class="endpoint-desc">社会貢献通知書データを取得する</span>
+      </div>
+      <div class="endpoint-body">
+        <p>月末（5月31日）以降に呼び出すと、参加者の社会貢献通知書データをJSON形式で返します。アプリ内でのPDF生成・表示にご利用ください。</p>
+
+        <h3>クエリパラメータ</h3>
+        <table class="param-table">
+          <thead><tr><th>パラメータ</th><th>型</th><th>説明</th></tr></thead>
+          <tbody>
+            <tr><td>record_id<span class="required">required</span></td><td>string</td><td><code>POST /v1/records</code> で返却された record_id</td></tr>
+            <tr><td>display_name<span class="optional">optional</span></td><td>string</td><td>通知書に表示する名前（アプリ側で設定）。未指定時は「参加者」</td></tr>
+          </tbody>
+        </table>
+
+        <h3>レスポンス例</h3>
+        <pre><code><span class="cm">// HTTP 200 OK</span>
+{
+  <span class="ck">"status"</span>: <span class="cs">"ok"</span>,
+  <span class="ck">"certificate"</span>: {
+    <span class="ck">"issued_at"</span>: <span class="cs">"2026-06-01"</span>,
+    <span class="ck">"year"</span>: <span class="cn">2026</span>,
+    <span class="ck">"display_name"</span>: <span class="cs">"山田 花子"</span>,
+    <span class="ck">"walking_days"</span>: <span class="cn">24</span>,
+    <span class="ck">"achievement_rate"</span>: <span class="cn">0.77</span>,
+    <span class="ck">"annual_saving_jpy"</span>: <span class="cn">68400</span>,
+    <span class="ck">"breakdown"</span>: {
+      <span class="ck">"medical_jpy"</span>: <span class="cn">42408</span>,
+      <span class="ck">"care_jpy"</span>: <span class="cn">19152</span>,
+      <span class="ck">"other_jpy"</span>: <span class="cn">6840</span>
+    },
+    <span class="ck">"equivalent_school_meals"</span>: <span class="cn">253</span>,
+    <span class="ck">"partner_name"</span>: <span class="cs">"dヘルスケア"</span>,
+    <span class="ck">"issuer"</span>: <span class="cs">"一般社団法人 足の８０２０"</span>,
+    <span class="ck">"issuer_url"</span>: <span class="cs">"https://www.ashino8020.jp"</span>
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- ── 自治体集計 ── -->
+    <span class="section-anchor" id="ep-city"></span>
+    <div class="endpoint-card">
+      <div class="endpoint-header">
+        <span class="endpoint-method method-get">GET</span>
+        <span class="endpoint-path">/v1/city-report</span>
+        <span class="badge badge-beta" style="margin-left:8px">beta</span>
+        <span class="endpoint-desc">自治体単位の集計レポートを取得する</span>
+      </div>
+      <div class="endpoint-body">
+        <p>自治体コード（総務省JISコード）を指定すると、その自治体の参加者集計・推計社会保障費削減総額を返します。自治体の健康施策レポートや住民向け広報にご活用ください。</p>
+
+        <h3>クエリパラメータ</h3>
+        <table class="param-table">
+          <thead><tr><th>パラメータ</th><th>型</th><th>説明</th></tr></thead>
+          <tbody>
+            <tr><td>city_code<span class="required">required</span></td><td>string</td><td>総務省JIS市区町村コード（例：<code>27203</code> = 大阪府泉大津市）</td></tr>
+            <tr><td>year<span class="optional">optional</span></td><td>integer</td><td>対象年度（デフォルト：直近年）</td></tr>
+          </tbody>
+        </table>
+
+        <h3>レスポンス例</h3>
+        <pre><code><span class="cm">// HTTP 200 OK</span>
+{
+  <span class="ck">"city_code"</span>: <span class="cs">"27203"</span>,
+  <span class="ck">"city_name"</span>: <span class="cs">"大阪府泉大津市"</span>,
+  <span class="ck">"year"</span>: <span class="cn">2026</span>,
+  <span class="ck">"participants"</span>: <span class="cn">1842</span>,
+  <span class="ck">"avg_achievement_rate"</span>: <span class="cn">0.74</span>,
+  <span class="ck">"total_saving_jpy"</span>: <span class="cn">94284000</span>,     <span class="cm">// 市全体の推計削減額</span>
+  <span class="ck">"avg_saving_per_person_jpy"</span>: <span class="cn">51186</span>,
+  <span class="ck">"yoy_change"</span>: <span class="cn">+0.12</span>,              <span class="cm">// 前年比参加者増減率</span>
+  <span class="ck">"note"</span>: <span class="cs">"推計値。個人情報は含みません。"</span>
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── スキーマ定義 ── -->
+  <div class="section">
+    <span class="section-anchor" id="schema"></span>
+    <h2>スキーマ定義</h2>
+
+    <h3>age_group の値</h3>
+    <table class="param-table">
+      <thead><tr><th>値</th><th>対象年齢</th><th>年間削減基準値</th></tr></thead>
+      <tbody>
+        <tr><td>30s</td><td>30代</td><td>28,000円</td></tr>
+        <tr><td>40s</td><td>40代</td><td>45,000円</td></tr>
+        <tr><td>50s</td><td>50代</td><td>72,000円</td></tr>
+        <tr><td>60s</td><td>60代</td><td>98,000円</td></tr>
+        <tr><td>70plus</td><td>70代以上</td><td>135,000円</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:11px;color:var(--ink-muted)">基準値は厚生労働省・NCGG-SGSコホート研究データより。地域補正・達成率・継続年数係数を乗じて最終値を算出。</p>
+
+    <span class="section-anchor" id="errors"></span>
+    <h3>エラーコード</h3>
+    <table class="param-table">
+      <thead><tr><th>HTTPステータス</th><th>code</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td>400</td><td>INVALID_PARAM</td><td>パラメータ形式・値域エラー</td></tr>
+        <tr><td>401</td><td>UNAUTHORIZED</td><td>partner_key が無効または未指定</td></tr>
+        <tr><td>403</td><td>NOT_CERTIFIED</td><td>パートナー認定が完了していない</td></tr>
+        <tr><td>404</td><td>RECORD_NOT_FOUND</td><td>指定した record_id が存在しない</td></tr>
+        <tr><td>422</td><td>PII_DETECTED</td><td>個人情報と思われるデータが検出された</td></tr>
+        <tr><td>429</td><td>RATE_LIMITED</td><td>レート制限超過</td></tr>
+        <tr><td>503</td><td>MAINTENANCE</td><td>メンテナンス中（5月10日〜31日以外は制限あり）</td></tr>
+      </tbody>
+    </table>
+
+    <pre><code><span class="cm">// エラーレスポンスの形式</span>
+{
+  <span class="ck">"status"</span>: <span class="cs">"error"</span>,
+  <span class="ck">"code"</span>: <span class="cs">"INVALID_PARAM"</span>,
+  <span class="ck">"message"</span>: <span class="cs">"walking_days must be between 1 and 31"</span>,
+  <span class="ck">"docs"</span>: <span class="cs">"https://ashino8020.github.io/api"</span>
+}</code></pre>
+
+    <span class="section-anchor" id="rate-limit"></span>
+    <h3>レート制限</h3>
+    <table class="param-table">
+      <thead><tr><th>プラン</th><th>上限</th><th>対象</th></tr></thead>
+      <tbody>
+        <tr><td>一般パートナー</td><td>1,000 req/日</td><td>全エンドポイント合計</td></tr>
+        <tr><td>認定パートナー（上位）</td><td>50,000 req/日</td><td>全エンドポイント合計</td></tr>
+        <tr><td>自治体・研究機関</td><td>要相談</td><td>city-report / 研究用途</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── クイックスタート ── -->
+  <div class="section">
+    <span class="section-anchor" id="quickstart"></span>
+    <h2>クイックスタート</h2>
+    <p>以下のコードで、5分で試算APIを呼び出せます。</p>
+
+    <h3>JavaScript（ブラウザ / Node.js）</h3>
+    <pre><code><span class="cm">// 社会貢献額を試算する</span>
+<span class="cb">const</span> <span class="ck">res</span> = <span class="cb">await</span> fetch(
+  <span class="cs">'https://ashino8020.github.io/api/v1/calculate'</span> +
+  <span class="cs">'?walking_days=22&avg_minutes=30&age_group=50s&region=urban&years=2'</span>,
+  {
+    headers: {
+      <span class="cs">'Authorization'</span>: <span class="cs">'Bearer YOUR_PARTNER_KEY'</span>,
+      <span class="cs">'Content-Type'</span>: <span class="cs">'application/json'</span>
+    }
+  }
+);
+
+<span class="cb">const</span> <span class="ck">data</span> = <span class="cb">await</span> res.json();
+console.log(<span class="cs">`年間削減額: ${data.result.annual_saving_jpy.toLocaleString()}円`</span>);
+console.log(<span class="cs">`給食換算: ${data.result.equivalent.school_meals}食分`</span>);</code></pre>
+
+    <h3>Python</h3>
+    <pre><code><span class="cb">import</span> requests
+
+params = {
+    <span class="cs">"walking_days"</span>: <span class="cn">22</span>,
+    <span class="cs">"avg_minutes"</span>: <span class="cn">30</span>,
+    <span class="cs">"age_group"</span>: <span class="cs">"50s"</span>,
+    <span class="cs">"region"</span>: <span class="cs">"urban"</span>,
+    <span class="cs">"years"</span>: <span class="cn">2</span>
+}
+headers = {<span class="cs">"Authorization"</span>: <span class="cs">"Bearer YOUR_PARTNER_KEY"</span>}
+
+res = requests.get(
+    <span class="cs">"https://ashino8020.github.io/api/v1/calculate"</span>,
+    params=params, headers=headers
+)
+data = res.json()
+print(<span class="cs">f"年間削減額: {data['result']['annual_saving_jpy']:,}円"</span>)</code></pre>
+
+    <span class="section-anchor" id="webhook"></span>
+    <h3>Webhook（月末自動通知）</h3>
+    <p>パートナー登録時にWebhook URLを設定すると、5月31日23:59に参加者全員分の集計データが自動でPOSTされます。</p>
+    <pre><code><span class="cm">// Webhookペイロード例</span>
+{
+  <span class="ck">"event"</span>: <span class="cs">"month_end_summary"</span>,
+  <span class="ck">"partner_id"</span>: <span class="cs">"your_partner_id"</span>,
+  <span class="ck">"year"</span>: <span class="cn">2026</span>,
+  <span class="ck">"summary"</span>: {
+    <span class="ck">"total_participants"</span>: <span class="cn">12480</span>,
+    <span class="ck">"avg_achievement_rate"</span>: <span class="cn">0.71</span>,
+    <span class="ck">"total_saving_jpy"</span>: <span class="cn">638784000</span>
+  },
+  <span class="ck">"certificate_ready"</span>: <span class="cb">true</span>
+}</code></pre>
+  </div>
+
+  <!-- ── プライバシー ── -->
+  <div class="section">
+    <span class="section-anchor" id="privacy"></span>
+    <h2>プライバシーポリシー</h2>
+    <div class="warn-box">
+      このAPIは個人情報保護法・GDPRの原則に従い設計されています。APIに送信できるのは匿名化・ハッシュ化されたデータのみです。氏名・メールアドレス・住所・電話番号・生年月日の送信は禁止されており、検出された場合は <code>422 PII_DETECTED</code> を返します。
+    </div>
+    <p>足の８０２０が保持するデータは、自治体・年齢層・地域別の集計値のみです。個人を再識別できるデータは一切保持しません。研究目的でのデータ提供は、倫理委員会の承認と参加者の明示的同意を条件として別途協議します。</p>
+
+    <span class="section-anchor" id="contact"></span>
+    <h3>お問い合わせ・パートナー申請</h3>
+    <table class="param-table">
+      <thead><tr><th>窓口</th><th>URL / 連絡先</th></tr></thead>
+      <tbody>
+        <tr><td>公式サイト</td><td><a href="https://www.ashino8020.jp">https://www.ashino8020.jp</a></td></tr>
+        <tr><td>GitHub</td><td><a href="https://github.com/ashino8020">https://github.com/ashino8020</a></td></tr>
+        <tr><td>Instagram</td><td><a href="https://www.instagram.com/ashino_8020">@ashino_8020</a></td></tr>
+        <tr><td>パートナー申請</td><td>公式サイトのお問い合わせフォームから</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    <span>© 2026 一般社団法人 足の８０２０ — <a href="https://www.ashino8020.jp">ashino8020.jp</a></span>
+    <span>API v1.0.0 &nbsp;·&nbsp; MIT License &nbsp;·&nbsp; <a href="https://ashino8020.github.io/engine">試算エンジン</a></span>
+  </footer>
+
+</main>
+</div>
+
+</body>
+</html>
